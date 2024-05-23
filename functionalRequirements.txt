@@ -1,0 +1,39 @@
+Train management System
+
+3.4 Functional Requirements:
+
+Ticketing System:
+
+User registration and login.
+Online ticket booking, payment processing, and e-ticket generation.
+Seat reservation, cancellation, and refund processing.
+Train Scheduling and Management:
+
+Automated and manual scheduling of trains.
+Real-time train tracking and status updates.
+Delay and disruption management.
+Passenger Information System:
+
+Real-time notifications on train status and changes.
+Digital display integration at stations.
+Maintenance Tracking:
+
+Scheduling regular maintenance tasks.
+Tracking maintenance activities and alerting staff.
+Maintaining detailed maintenance logs.
+Staff Management:
+
+Employee schedule and shift management.
+Task assignments and tracking.
+Training and compliance monitoring.
+Reporting and Analytics:
+
+Generating reports on various metrics (e.g., ticket sales, train punctuality).
+Data visualization and analytics tools.
+
+
+
+
+
+My Models
+User, Ticket, Train, Schedule, MaintenanceLog, and Employee
