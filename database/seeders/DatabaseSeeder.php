@@ -15,9 +15,10 @@ class DatabaseSeeder extends Seeder
     {
 
         $this->call([
-            TrainSeeder::class,
             RouteSeeder::class,
-            RouteTrainSeeder::class,
+            TrainSeeder::class,
+           // RouteTrainSeeder::class,
+            PathsSeeder::class,
         ]);
 
         // run this php artisan db:seed

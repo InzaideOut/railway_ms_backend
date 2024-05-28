@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Route;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class RouteSeeder extends Seeder
 {
@@ -13,8 +14,11 @@ class RouteSeeder extends Seeder
      */
     public function run(): void
     {
-        //
-        Route::create(['name' => 'Route 1']);
-        Route::create(['name' => 'Route 2']);
+        DB::table('routes')->insert([
+            ['name' => 'Lagos to Oyo'],
+            ['name' => 'Lagos to Kano'],
+            ['name' => 'Abuja to Enugu'],
+            ['name' => 'Kano to Jos'],
+        ]);
     }
 }
