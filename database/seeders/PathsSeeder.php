@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\path;
 use App\Models\route;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class PathsSeeder extends Seeder
@@ -14,67 +15,46 @@ class PathsSeeder extends Seeder
      */
     public function run(): void
     {
-    //     $routes = \App\Models\Route::all();
 
-    // foreach ($routes as $route) {
-    //     // Generate paths for each route
-    //     // For simplicity, we'll just use some sample cities
-    //     $cities = ['Lagos', 'Abuja', 'Kano', 'Port Harcourt', 'Kaduna', 'Enugu', 'Jos'];
-    //     shuffle($cities);
-        
-    //     $departureCity = array_shift($cities);
-    //     foreach ($cities as $arrivalCity) {
-    //         \App\Models\Path::create([
-    //             'route_id' => $route->id,
-    //             'departure_city' => $departureCity,
-    //             'arrival_city' => $arrivalCity,
-    //         ]);
-    //         $departureCity = $arrivalCity;
-    //     }
-    // }
+         // Paths for "Lagos to Ibadan" route
+         DB::table('paths')->insert([
+            ['route_id' => 1, 'city' => 'Lagos', 'sequence' => 1],
+            ['route_id' => 1, 'city' => 'Abeokuta', 'sequence' => 2],
+            ['route_id' => 1, 'city' => 'Ibadan', 'sequence' => 3],
+        ]);
 
+        // Paths for "Lagos to Kano" route
+        DB::table('paths')->insert([
+            ['route_id' => 2, 'city' => 'Lagos', 'sequence' => 1],
+            ['route_id' => 2, 'city' => 'Abeokuta', 'sequence' => 2],
+            ['route_id' => 2, 'city' => 'Ibadan', 'sequence' => 3],
+            ['route_id' => 2, 'city' => 'Ilorin', 'sequence' => 4],
+            ['route_id' => 2, 'city' => 'Jebba', 'sequence' => 5],
+            ['route_id' => 2, 'city' => 'Minna', 'sequence' => 6],
+            ['route_id' => 2, 'city' => 'Kaduna', 'sequence' => 7],
+            ['route_id' => 2, 'city' => 'Zaria', 'sequence' => 8],
+            ['route_id' => 2, 'city' => 'Kano', 'sequence' => 9],
+        ]);
 
-        $routesPaths = [
-            'Lagos to Oyo' => [
-                ['Lagos', 'Abeokuta'],
-                ['Abeokuta', 'Ibadan']
-            ],
-            'Lagos to Kano' => [
-                ['Lagos', 'Abeokuta'],
-                ['Abeokuta', 'Ibadan'],
-                ['Ibadan', 'Ilorin'],
-                ['Ilorin', 'Jebba'],
-                ['Jebba', 'Minna'],
-                ['Minna', 'Kaduna'],
-                ['Kaduna', 'Zaria'],
-                ['Zaria', 'Kano']
-            ],
-            'Abuja to Enugu' => [
-                ['Abuja', 'Keffi'],
-                ['Keffi', 'Akwanga'],
-                ['Akwanga', 'Lafia'],
-                ['Lafia', 'Makurdi'],
-                ['Makurdi', 'Otukpo'],
-                ['Otukpo', 'Enugu']
-            ],
-            'Kano to Jos' => [
-                ['Kano', 'Zaria'],
-                ['Zaria', 'Kaduna'],
-                ['Kaduna', 'Jos']
-            ],
-        ];
+        // Paths for "Lagos to Abuja" route
+        DB::table('paths')->insert([
+            ['route_id' => 3, 'city' => 'Lagos', 'sequence' => 1],
+            ['route_id' => 3, 'city' => 'Ibadan', 'sequence' => 2],
+            ['route_id' => 3, 'city' => 'Ilorin', 'sequence' => 3],
+            ['route_id' => 3, 'city' => 'Abuja', 'sequence' => 4],
+        ]);
 
-        foreach ($routesPaths as $routeName => $cities) {
-            $route = route::where('name', $routeName)->first();
+        // Paths for "Kano to Abuja" route
+        DB::table('paths')->insert([
+            ['route_id' => 4, 'city' => 'Kano', 'sequence' => 1],
+            ['route_id' => 4, 'city' => 'Zaria', 'sequence' => 2],
+            ['route_id' => 4, 'city' => 'Kaduna', 'sequence' => 3],
+            ['route_id' => 4, 'city' => 'Abuja', 'sequence' => 4],
+        ]);
 
-            foreach ($cities as $path) {
-                path::create([
-                    'route_id' => $route->id,
-                    'departure_city' => $path[0],
-                    'arrival_city' => $path[1],
-                ]);
-            }
-        }
+        // Add paths for the remaining routes similarly
+   
+    
     }
-    }
+}
 
