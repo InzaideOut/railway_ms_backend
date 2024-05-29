@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Path;
 use App\Models\Route;
 use App\Models\Booking;
 use Illuminate\Http\Request;
@@ -24,18 +25,19 @@ class UserBookingController extends Controller
         return response()->json($paths);
     }
 
-    private function calculateTime($index)
+    //NEW METHOD
+    //USING PATH->CITYID FOR DEPARTURE AND ARRIVAL ALSO USING INITIAL ARRIVAL TIME FOR TRAIN 
+
+    private function calculateTime($index, $initialDepartureTime)
     {
         // Assuming each segment takes 1 hour
-        // You can adjust this based on your actual data
         $travelTimePerSegment = 1; // in hours
 
         // Calculate total travel time from the beginning to the given index
-        $totalTravelTime = $index * $travelTimePerSegment;
+        $totalTravelTime = ($index - 1) * $travelTimePerSegment;
 
-        // Add travel time to a starting time (e.g., 08:00)
-        // Adjust this based on your actual starting time
-        $startingTime = strtotime('08:00'); // Convert to UNIX timestamp
+        // Add travel time to the initial departure time
+        $startingTime = strtotime($initialDepartureTime); // Convert to UNIX timestamp
         $arrivalTime = date('H:i', $startingTime + $totalTravelTime * 3600); // Convert back to time format
 
         return $arrivalTime;
@@ -44,36 +46,171 @@ class UserBookingController extends Controller
     public function calculateDepartureAndArrivalTime(Request $request)
     {
         $routeId = $request->input('route_id');
-        $departureCity = $request->input('departure_city');
-        $arrivalCity = $request->input('arrival_city');
+        $departureCityId = $request->input('departure_city_id');
+        $arrivalCityId = $request->input('arrival_city_id');
         $travelDate = $request->input('travel_date');
 
         // Retrieve route details
         $route = Route::findOrFail($routeId);
 
-        // Get paths associated with the route
-        $paths = explode(', ', $route->paths);
+        // Debug: Check if trains are being fetched
+        $train = $route->trains()->first();
+        if (!$train) {
+            return response()->json(['error' => 'No trains available for the selected route.'], 404);
+        }
+
+
+        // Get the initial departure time for the first train on the route
+        $initialDepartureTime = $train->initial_departure_time;
 
         // Validate user-selected departure and arrival cities
-        if (!in_array($departureCity, $paths) || !in_array($arrivalCity, $paths)) {
+        $departurePath = Path::where('route_id', $routeId)->where('id', $departureCityId)->first();
+        $arrivalPath = Path::where('route_id', $routeId)->where('id', $arrivalCityId)->first();
+
+        if (!$departurePath || !$arrivalPath) {
             return response()->json(['error' => 'Invalid departure or arrival city selection for the chosen route.'], 400);
         }
 
         // Find positions of departure and arrival cities in the path sequence
-        $departureIndex = array_search($departureCity, $paths);
-        $arrivalIndex = array_search($arrivalCity, $paths);
+        $departureIndex = $departurePath->sequence;
+        $arrivalIndex = $arrivalPath->sequence;
 
-        // Calculate departure time
-        $departureTime = $this->calculateTime($departureIndex);
 
-        // Calculate arrival time
-        $arrivalTime = $this->calculateTime($arrivalIndex);
+        // Ensure departure index is less than arrival index
+        if ($departureIndex >= $arrivalIndex) {
+            return response()->json(['error' => 'Departure city must precede arrival city.'], 400);
+        }
+
+        // Calculate departure time with initial departure time
+        $departureTime = $this->calculateTime($departureIndex, $initialDepartureTime);
+
+        // Calculate arrival time with initial departure time
+        $arrivalTime = $this->calculateTime($arrivalIndex, $initialDepartureTime);
 
         // Format departure and arrival times with a hyphen (-)
         $formattedTime = $departureTime . ' - ' . $arrivalTime;
 
-        return response()->json(['departure_and_arrival_time' => $formattedTime]);
+        return response()->json([
+            'initial_departure_time' => $initialDepartureTime,
+            'departure_city' => $departurePath->city,
+            'arrival_city' => $arrivalPath->city,
+            'departure_and_arrival_time' => $formattedTime,
+            'train' => [
+                // 'id' => $train->id,
+                'name' => $train->name,
+                'type' => $train->type,
+                // 'route_id' => $train->route_id
+            ],
+            'route_name' => $route->name
+            // 'initial_departure_time' => $initialDepartureTime,
+            // 'departure_city' => $departurePath->city,
+            // 'arrival_city' => $arrivalPath->city,
+            // 'departure_and_arrival_time' => $formattedTime
+        ]);
+
+        // return response()->json(['departure_and_arrival_time' => $formattedTime]);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //WORKING FINE JUST WANTED TO TRY USING THE PATH ID FOR DEPARTURE AND ARRIVAL CITY 
+    // private function calculateTime($index)
+    // {
+    //     // Assuming each segment takes 1 hour
+    //     // You can adjust this based on your actual data
+    //     $travelTimePerSegment = 1; // in hours
+
+    //     // Calculate total travel time from the beginning to the given index
+    //     $totalTravelTime = $index * $travelTimePerSegment;
+
+    //     // Add travel time to a starting time (e.g., 08:00)
+    //     // Adjust this based on your actual starting time
+    //     $startingTime = strtotime('08:00'); // Convert to UNIX timestamp
+    //     $arrivalTime = date('H:i', $startingTime + $totalTravelTime * 3600); // Convert back to time format
+
+    //     return $arrivalTime;
+    // }
+
+    // public function calculateDepartureAndArrivalTime(Request $request)
+    // {
+    //     $routeId = $request->input('route_id');
+    //     $departureCity = $request->input('departure_city');
+    //     $arrivalCity = $request->input('arrival_city');
+    //     $travelDate = $request->input('travel_date');
+
+    //     // Retrieve route details
+    //     $route = Route::findOrFail($routeId);
+
+    //     // Get paths associated with the route
+    //     $paths = explode(', ', $route->paths);
+
+    //     // Validate user-selected departure and arrival cities
+    //     if (!in_array($departureCity, $paths) || !in_array($arrivalCity, $paths)) {
+    //         return response()->json(['error' => 'Invalid departure or arrival city selection for the chosen route.'], 400);
+    //     }
+
+    //     // Find positions of departure and arrival cities in the path sequence
+    //     $departureIndex = array_search($departureCity, $paths);
+    //     $arrivalIndex = array_search($arrivalCity, $paths);
+
+    //     // Calculate departure time
+    //     $departureTime = $this->calculateTime($departureIndex);
+
+    //     // Calculate arrival time
+    //     $arrivalTime = $this->calculateTime($arrivalIndex);
+
+    //     // Format departure and arrival times with a hyphen (-)
+    //     $formattedTime = $departureTime . ' - ' . $arrivalTime;
+
+    //     return response()->json(['departure_and_arrival_time' => $formattedTime]);
+    // }
 
     
 

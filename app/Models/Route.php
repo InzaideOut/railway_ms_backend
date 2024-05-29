@@ -26,4 +26,7 @@ class Route extends Model
     {
         return $this->hasMany(Booking::class);
     }
+    public function trains(){
+        return $this->hasMany(Trains::class);
+    }
 }
