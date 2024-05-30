@@ -14,14 +14,14 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('auth/logout', [AuthController::class, 'logout']);
 });
 
 Route::get('/booking/routes', [UserBookingController::class, 'listRoutes']);
 Route::get('/booking/routes/{routeId}/paths', [UserBookingController::class, 'getPaths']);
 Route::post('/booking/calculate-time', [UserBookingController::class, 'calculateDepartureAndArrivalTime']);
 Route::post('/booking/book-train', [UserBookingController::class, 'bookTrain']);
-Route::middleware('auth:api')->get('/booking/user/bookings', [UserBookingController::class, 'userBookings']);
+ROute::post('/booking/check-booking', [UserBookingController::class, 'checkBooking']);
 
 
 
