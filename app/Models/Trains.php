@@ -12,6 +12,7 @@ class Trains extends Model
         'name', 
         'type',
         'route_id',
+        'capacity',
         'initial_departure_time'
     ];
 

@@ -14,13 +14,14 @@ class Booking extends Model
 
     protected $fillable = [
         'user_id', 
-        'route_id', 
+        'train_id', 
         'departure_city', 
         'arrival_city', 
         'travel_date', 
         'departure_time', 
         'arrival_time', 
-        'seat_number'
+        'seat_number',
+        'ticket_number'
     ];
 
     public function user()

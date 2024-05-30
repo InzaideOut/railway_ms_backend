@@ -84,3 +84,191 @@ Real-time Updates and Notifications:
 
 Passengers receive real-time updates on train schedules, delays, and cancellations.
 Notifications are sent to passengers in case of any changes to their booked journeys, ensuring a smooth travel experience.
+
+
+
+
+
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Booking;
+use App\Models\Route;
+use App\Models\Path;
+use App\Models\Train;
+use App\Models\User;
+use Illuminate\Support\Str;
+
+class UserBookingController extends Controller
+{
+    // List all routes
+    public function listRoutes()
+    {
+        $routes = Route::all();
+        return response()->json($routes);
+    }
+
+    // Get paths associated with a route
+    public function getPaths($routeId)
+    {
+        $paths = Path::where('route_id', $routeId)->orderBy('sequence')->get();
+        return response()->json($paths);
+    }
+
+    // Helper function to calculate time
+    private function calculateTime($index, $initialDepartureTime)
+    {
+        $travelTimePerSegment = 1; // in hours
+        $totalTravelTime = ($index - 1) * $travelTimePerSegment;
+        $startingTime = strtotime($initialDepartureTime);
+        $calculatedTime = date('H:i', $startingTime + $totalTravelTime * 3600);
+
+        return $calculatedTime;
+    }
+
+    // Common logic for calculating departure and arrival times and checking seat availability
+    private function getDepartureAndArrivalDetails($routeId, $departureCityId, $arrivalCityId, $travelDate)
+    {
+        $route = Route::findOrFail($routeId);
+        $trains = $route->trains;
+
+        if ($trains->isEmpty()) {
+            throw new \Exception('No trains available for the selected route.');
+        }
+
+        $departurePath = Path::where('route_id', $routeId)->where('id', $departureCityId)->first();
+        $arrivalPath = Path::where('route_id', $routeId)->where('id', $arrivalCityId)->first();
+
+        if (!$departurePath || !$arrivalPath) {
+            throw new \Exception('Invalid departure or arrival city selection for the chosen route.');
+        }
+
+        if ($departurePath->sequence >= $arrivalPath->sequence) {
+            throw new \Exception('Departure city must precede arrival city.');
+        }
+
+        foreach ($trains as $train) {
+            $existingBookings = Booking::where('train_id', $train->id)
+                ->where('travel_date', $travelDate)
+                ->count();
+
+            if ($existingBookings < $train->capacity) {
+                $departureTime = $this->calculateTime($departurePath->sequence, $train->initial_departure_time);
+                $arrivalTime = $this->calculateTime($arrivalPath->sequence, $train->initial_departure_time);
+
+                return [
+                    'route_name' => $route->name,
+                    'train' => $train,
+                    'departure_city' => $departurePath->city,
+                    'arrival_city' => $arrivalPath->city,
+                    'departure_time' => $departureTime,
+                    'arrival_time' => $arrivalTime
+                ];
+            }
+        }
+
+        throw new \Exception('No seats available on any trains for the selected route on the given travel date.');
+    }
+
+    // Calculate departure and arrival times
+    public function calculateDepartureAndArrivalTime(Request $request)
+    {
+        $request->validate([
+            'route_id' => 'required|exists:routes,id',
+            'departure_city_id' => 'required|exists:paths,id',
+            'arrival_city_id' => 'required|exists:paths,id',
+            'travel_date' => 'required|date',
+        ]);
+
+        try {
+            $details = $this->getDepartureAndArrivalDetails(
+                $request->input('route_id'),
+                $request->input('departure_city_id'),
+                $request->input('arrival_city_id'),
+                $request->input('travel_date')
+            );
+
+            return response()->json([
+                'departure_city' => $details['departure_city'],
+                'arrival_city' => $details['arrival_city'],
+                'departure_and_arrival_time' => $details['departure_time'] . ' - ' . $details['arrival_time']
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    // Generate seat number
+    private function generateSeatNumber($trainId, $travelDate)
+    {
+        $existingBookings = Booking::where('train_id', $trainId)
+            ->where('travel_date', $travelDate)
+            ->count();
+
+        return 'S' . ($existingBookings + 1);
+    }
+
+    // Generate ticket number
+    private function generateTicketNumber()
+    {
+        return strtoupper(Str::random(8));
+    }
+
+    // Book a train
+    public function bookTrain(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'route_id' => 'required|exists:routes,id',
+            'departure_city_id' => 'required|exists:paths,id',
+            'arrival_city_id' => 'required|exists:paths,id',
+            'travel_date' => 'required|date',
+        ]);
+
+        try {
+            $details = $this->getDepartureAndArrivalDetails(
+                $request->input('route_id'),
+                $request->input('departure_city_id'),
+                $request->input('arrival_city_id'),
+                $request->input('travel_date')
+            );
+
+            $seatNumber = $this->generateSeatNumber($details['train']->id, $request->input('travel_date'));
+            $ticketNumber = $this->generateTicketNumber();
+
+            $booking = Booking::create([
+                'user_id' => $request->input('user_id'),
+                'train_id' => $details['train']->id,
+                'departure_city' => $details['departure_city'],
+                'arrival_city' => $details['arrival_city'],
+                'travel_date' => $request->input('travel_date'),
+                'departure_time' => $details['departure_time'],
+                'arrival_time' => $details['arrival_time'],
+                'seat_number' => $seatNumber,
+                'ticket_number' => $ticketNumber,
+            ]);
+
+            $user = User::findOrFail($request->input('user_id'));
+
+            return response()->json([
+                'user' => [
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                ],
+                'route_name' => $details['route_name'],
+                'train' => $details['train'],
+                'departure_city' => $details['departure_city'],
+                'arrival_city' => $details['arrival_city'],
+                'travel_date' => $request->input('travel_date'),
+                'departure_time' => $details['departure_time'],
+                'arrival_time' => $details['arrival_time'],
+                'seat_number' => $seatNumber,
+                'ticket_number' => $ticketNumber,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+}

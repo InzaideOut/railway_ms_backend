@@ -15,14 +15,15 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->unsignedBigInteger('route_id');
-            $table->foreign('route_id')->references('id')->on('routes')->onDelete('cascade');
+            $table->unsignedBigInteger('train_id');
+            $table->foreign('train_id')->references('id')->on('trains')->onDelete('cascade');
             $table->string('departure_city');
             $table->string('arrival_city');
             $table->date('travel_date');
             $table->time('departure_time');
             $table->time('arrival_time');
             $table->string('seat_number');
+            $table->string('ticket_number');
             // $table->unsignedBigInteger('route_id');
             // $table->foreign('route_id')->references('id')->on('routes')->onDelete('cascade');
             // $table->string('departure_city');
