@@ -133,7 +133,7 @@ class UserBookingController extends Controller
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'route_id' => 'required|exists:routes,id',
+            'train_id' => 'required|exists:trains,id',
             'departure_city_id' => 'required|exists:paths,id',
             'arrival_city_id' => 'required|exists:paths,id',
             'travel_date' => 'required|date',
